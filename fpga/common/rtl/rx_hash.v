@@ -52,6 +52,7 @@ module rx_hash #
     /*
      * AXI input
      */
+    // Get the data from MAC + PHY
     input  wire [DATA_WIDTH-1:0]  s_axis_tdata,
     input  wire [KEEP_WIDTH-1:0]  s_axis_tkeep,
     input  wire                   s_axis_tvalid,
@@ -174,6 +175,8 @@ function [31:0] hash_toep(input [36*8-1:0] data, input [5:0] len, input [40*8-1:
 endfunction
 
 // compute toeplitz hashes
+// First 8 bytes: srcIP + dstIP
+// Next 4 bytes: srcPort + dstPort
 wire [31:0] hash_part_ipv4_ip = hash_toep(hash_data_reg, 8, hash_key);
 wire [31:0] hash_part_ipv4_port = hash_toep(hash_data_reg >> 8*8, 4, hash_key << 8*8);
 
