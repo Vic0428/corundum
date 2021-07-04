@@ -65,6 +65,8 @@ module tx_scheduler_rr #
 
     /*
      * Transmit request output (queue index)
+     * Vic:
+     *  Passed to tx_engine
      */
     output wire [QUEUE_INDEX_WIDTH-1:0]     m_axis_tx_req_queue,
     output wire [REQ_TAG_WIDTH-1:0]         m_axis_tx_req_tag,
@@ -73,6 +75,8 @@ module tx_scheduler_rr #
 
     /*
      * Transmit request status input
+     * Vic:
+     *  Passed from tx_engine 
      */
     input  wire [DMA_CLIENT_LEN_WIDTH-1:0]  s_axis_tx_req_status_len,
     input  wire [REQ_TAG_WIDTH-1:0]         s_axis_tx_req_status_tag,
@@ -80,6 +84,8 @@ module tx_scheduler_rr #
 
     /*
      * Doorbell input
+     * Vic:
+     *  Passed from tx_queue_manager 
      */
     input  wire [QUEUE_INDEX_WIDTH-1:0]     s_axis_doorbell_queue,
     input  wire                             s_axis_doorbell_valid,
@@ -401,6 +407,7 @@ end
 integer j;
 
 always @* begin
+    // Update pipeline .. 
     op_axil_write_pipe_next = {op_axil_write_pipe_reg, 1'b0};
     op_axil_read_pipe_next = {op_axil_read_pipe_reg, 1'b0};
     op_doorbell_pipe_next = {op_doorbell_pipe_reg, 1'b0};
@@ -499,6 +506,7 @@ always @* begin
     end
 
     // pipeline stage 0 - receive request
+    // Vic: add this request to the pipeline[0]
     if (!init_reg && !op_internal_pipe_hazard) begin
         // init queue states
         op_internal_pipe_next[0] = 1'b1;
@@ -756,6 +764,7 @@ always @* begin
     if (s_axis_tx_req_status_valid) begin
         finish_fifo_we = 1'b1;
         finish_fifo_wr_tag = s_axis_tx_req_status_tag;
+        // req_status_len: the length of the transmitted packets 
         finish_fifo_wr_status = s_axis_tx_req_status_len != 0;
         finish_fifo_wr_ptr_next = finish_fifo_wr_ptr_reg + 1;
     end

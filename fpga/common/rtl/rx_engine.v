@@ -101,6 +101,8 @@ module rx_engine #
 
     /*
      * Receive request input (queue index)
+     * Vic:
+     *  Based on rx_hash 
      */
     input  wire [QUEUE_INDEX_WIDTH-1:0]     s_axis_rx_req_queue,
     input  wire [REQ_TAG_WIDTH-1:0]         s_axis_rx_req_tag,
@@ -116,6 +118,8 @@ module rx_engine #
 
     /*
      * Descriptor request output
+     * Vic:
+     *  Passed to desc_fetch module 
      */
     output wire [QUEUE_INDEX_WIDTH-1:0]     m_axis_desc_req_queue,
     output wire [DESC_REQ_TAG_WIDTH-1:0]    m_axis_desc_req_tag,
@@ -124,6 +128,8 @@ module rx_engine #
 
     /*
      * Descriptor request status input
+     * Vic:
+     *  Passed from desc_fetch module 
      */
     input  wire [QUEUE_INDEX_WIDTH-1:0]     s_axis_desc_req_status_queue,
     input  wire [QUEUE_PTR_WIDTH-1:0]       s_axis_desc_req_status_ptr,
@@ -135,6 +141,8 @@ module rx_engine #
 
     /*
      * Descriptor data input
+     * Vic:
+     *  Passed from desc_fetch module 
      */
     input  wire [AXIS_DESC_DATA_WIDTH-1:0]  s_axis_desc_tdata,
     input  wire [AXIS_DESC_KEEP_WIDTH-1:0]  s_axis_desc_tkeep,
@@ -146,6 +154,8 @@ module rx_engine #
 
     /*
      * Completion request output
+     * Vic:
+     *  Passed to cpl_write module 
      */
     output wire [CPL_QUEUE_INDEX_WIDTH-1:0] m_axis_cpl_req_queue,
     output wire [DESC_REQ_TAG_WIDTH-1:0]    m_axis_cpl_req_tag,
@@ -155,6 +165,8 @@ module rx_engine #
 
     /*
      * Completion request status input
+     * Vic:
+     *  Passed from cpl_write module
      */
     input  wire [DESC_REQ_TAG_WIDTH-1:0]    s_axis_cpl_req_status_tag,
     input  wire                             s_axis_cpl_req_status_full,
@@ -163,6 +175,8 @@ module rx_engine #
 
     /*
      * DMA write descriptor output
+     * Vic
+     *  passed to DMA module
      */
     output wire [DMA_ADDR_WIDTH-1:0]        m_axis_dma_write_desc_dma_addr,
     output wire [RAM_ADDR_WIDTH-1:0]        m_axis_dma_write_desc_ram_addr,
@@ -173,6 +187,8 @@ module rx_engine #
 
     /*
      * DMA write descriptor status input
+     * Vic:
+     *  Passed from DMA module
      */
     input  wire [DMA_TAG_WIDTH-1:0]         s_axis_dma_write_desc_status_tag,
     input  wire                             s_axis_dma_write_desc_status_valid,
