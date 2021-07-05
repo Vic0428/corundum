@@ -199,6 +199,12 @@ reg s_axil_arready_reg = 0, s_axil_arready_next;
 reg [AXIL_DATA_WIDTH-1:0] s_axil_rdata_reg = 0, s_axil_rdata_next;
 reg s_axil_rvalid_reg = 0, s_axil_rvalid_next;
 
+// Store states associated with each queue
+// bit 0: queue enabled
+// bit 1: queue global enabled
+// bit 2: queue schedule enabled
+// bit 6: queue active
+// bit 7: queue scheduled 
 reg [QUEUE_RAM_WIDTH-1:0] queue_ram[QUEUE_COUNT-1:0];
 reg [QUEUE_INDEX_WIDTH-1:0] queue_ram_read_ptr;
 reg [QUEUE_INDEX_WIDTH-1:0] queue_ram_write_ptr;
@@ -556,6 +562,7 @@ always @* begin
 
         finish_valid_next = 1'b0;
 
+        // Put the queue information into the pipeline
         queue_ram_read_ptr = op_table_queue[finish_ptr_reg];
         queue_ram_addr_pipeline_next[0] = op_table_queue[finish_ptr_reg];
     end else if (SCHED_CTRL_ENABLE && s_axis_sched_ctrl_valid && !op_ctrl_pipe_reg[0] && !op_ctrl_pipe_hazard) begin
@@ -564,21 +571,27 @@ always @* begin
 
         s_axis_sched_ctrl_ready_next = 1'b1;
 
+        // Put the enable schedule information into the pipeline
         write_data_pipeline_next[0] = s_axis_sched_ctrl_enable;
 
+        // Put the queue information into the pipeline
         queue_ram_read_ptr = s_axis_sched_ctrl_queue;
         queue_ram_addr_pipeline_next[0] = s_axis_sched_ctrl_queue;
     end else if (enable && op_table_start_ptr_valid && axis_scheduler_fifo_out_valid && (!m_axis_tx_req_valid || m_axis_tx_req_ready) && !op_req_pipe_reg && !op_req_pipe_hazard) begin
         // transmit request
         op_req_pipe_next[0] = 1'b1;
 
+        // Store this information to the op_table
+        // op_table_start[op_table_start_ptr] = op_table_start_queue
         op_table_start_en = 1'b1;
         op_table_start_queue = axis_scheduler_fifo_out_queue;
 
         op_index_pipeline_next[0] = op_table_start_ptr;
 
+        // Get one queue based on the fifo queue
         axis_scheduler_fifo_out_ready = 1'b1;
 
+        // Put the queue information into the pipeline
         queue_ram_read_ptr = axis_scheduler_fifo_out_queue;
         queue_ram_addr_pipeline_next[0] = axis_scheduler_fifo_out_queue;
     end
