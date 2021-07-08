@@ -120,9 +120,11 @@ module queue_manager #
     input  wire [AXIL_STRB_WIDTH-1:0]      s_axil_wstrb,
     input  wire                            s_axil_wvalid,
     output wire                            s_axil_wready,
+    // Write response chanel
     output wire [1:0]                      s_axil_bresp,
     output wire                            s_axil_bvalid,
     input  wire                            s_axil_bready,
+    // 
     input  wire [AXIL_ADDR_WIDTH-1:0]      s_axil_araddr,
     input  wire [2:0]                      s_axil_arprot,
     input  wire                            s_axil_arvalid,
@@ -232,9 +234,9 @@ reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_reg = 0;
 reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_pipeline_reg[PIPELINE-1:1];
 
 // The necessary queue state information
-// The consumer pointer (16 bits)
-wire [QUEUE_PTR_WIDTH-1:0] queue_ram_read_data_head_ptr = queue_ram_read_data_pipeline_reg[PIPELINE-1][15:0];
 // The producer pointer (16 bits)
+wire [QUEUE_PTR_WIDTH-1:0] queue_ram_read_data_head_ptr = queue_ram_read_data_pipeline_reg[PIPELINE-1][15:0];
+// The consumer pointer (16 bits)
 wire [QUEUE_PTR_WIDTH-1:0] queue_ram_read_data_tail_ptr = queue_ram_read_data_pipeline_reg[PIPELINE-1][31:16];
 // The associated completion queue (16 bits)
 wire [CPL_INDEX_WIDTH-1:0] queue_ram_read_data_cpl_queue = queue_ram_read_data_pipeline_reg[PIPELINE-1][47:32];
@@ -289,6 +291,10 @@ assign s_axil_rdata = s_axil_rdata_reg;
 assign s_axil_rresp = 2'b00;
 assign s_axil_rvalid = s_axil_rvalid_reg;
 
+// For s_axil_addr
+// [0:1] unused
+// [2:4] used as parameter in axil_reg_pipeline
+// [5:12] used as queue index 
 wire [QUEUE_INDEX_WIDTH-1:0] s_axil_awaddr_queue = s_axil_awaddr >> 5;
 wire [2:0] s_axil_awaddr_reg = s_axil_awaddr >> 2;
 wire [QUEUE_INDEX_WIDTH-1:0] s_axil_araddr_queue = s_axil_araddr >> 5;
@@ -303,11 +309,13 @@ wire [QUEUE_PTR_WIDTH-1:0] queue_ram_read_active_tail_ptr = queue_active ? op_ta
 integer i;
 
 initial begin
+    // Initialize the queue_ram (which contains the state information for each queue)
     for (i = 0; i < QUEUE_COUNT; i = i + 1) begin
         queue_ram[i] = 0;
     end
 
     for (i = 0; i < PIPELINE; i = i + 1) begin
+        // The queue id for each pipeline
         queue_ram_addr_pipeline_reg[i] = 0;
         axil_reg_pipeline_reg[i] = 0;
         write_data_pipeline_reg[i] = 0;
@@ -400,23 +408,31 @@ always @* begin
         // AXIL write
         op_axil_write_pipe_next[0] = 1'b1;
 
+        // Set the output ready signal 
         s_axil_awready_next = 1'b1;
         s_axil_wready_next = 1'b1;
 
+        // Put data to be write into the pipeline 
         write_data_pipeline_next[0] = s_axil_wdata;
         write_strobe_pipeline_next[0] = s_axil_wstrb;
 
+        // Put the queue id into the pipeline
         queue_ram_read_ptr = s_axil_awaddr_queue;
         queue_ram_addr_pipeline_next[0] = s_axil_awaddr_queue;
+        //
         axil_reg_pipeline_next[0] = s_axil_awaddr_reg;
     end else if (s_axil_arvalid && (!s_axil_rvalid || s_axil_rready) && !op_axil_read_pipe_reg[0] && !op_axil_read_pipe_hazard) begin
         // AXIL read
         op_axil_read_pipe_next[0] = 1'b1;
 
+        // Set the output ready signal 
         s_axil_arready_next = 1'b1;
 
+        // Put the queue id into the pipeline (the upper 11 bit)
         queue_ram_read_ptr = s_axil_araddr_queue;
         queue_ram_addr_pipeline_next[0] = s_axil_araddr_queue;
+
+        // 
         axil_reg_pipeline_next[0] = s_axil_araddr_reg;
     end else if (op_table_active[op_table_finish_ptr_reg] && op_table_commit[op_table_finish_ptr_reg] && !op_commit_pipe_reg[0] && !op_commit_pipe_hazard) begin
         // dequeue commit finalize (update pointer)
@@ -488,8 +504,9 @@ always @* begin
         queue_ram_wr_en = 1'b1;
     end else if (op_axil_write_pipe_reg[PIPELINE-1]) begin
         // AXIL write
+        // Set write response signal 
         s_axil_bvalid_next = 1'b1;
-
+        // Which queue to write
         queue_ram_write_ptr = queue_ram_addr_pipeline_reg[PIPELINE-1];
         queue_ram_wr_en = 1'b1;
 
@@ -499,6 +516,7 @@ always @* begin
                 // base address lower 32
                 // base address is read-only when queue is active
                 if (!queue_ram_read_data_active) begin
+                    // Write lower 32 bit base address
                     queue_ram_write_data[95:64] = write_data_pipeline_reg[PIPELINE-1];
                     queue_ram_be[11:8] = write_strobe_pipeline_reg[PIPELINE-1];
                 end
@@ -507,6 +525,7 @@ always @* begin
                 // base address upper 32
                 // base address is read-only when queue is active
                 if (!queue_ram_read_data_active) begin
+                    // Write upper 32 bit base address
                     queue_ram_write_data[127:96] = write_data_pipeline_reg[PIPELINE-1];
                     queue_ram_be[15:12] = write_strobe_pipeline_reg[PIPELINE-1];
                 end
@@ -537,6 +556,7 @@ always @* begin
                 // completion queue index
                 // completion queue index is read-only when queue is active
                 if (!queue_ram_read_data_active) begin
+                    // Set completion queue index
                     queue_ram_write_data[47:32] = write_data_pipeline_reg[PIPELINE-1];
                     queue_ram_be[5:4] = write_strobe_pipeline_reg[PIPELINE-1];
                 end
