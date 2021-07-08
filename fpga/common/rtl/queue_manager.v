@@ -231,13 +231,22 @@ reg [QUEUE_RAM_BE_WIDTH-1:0] queue_ram_be;
 reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_reg = 0;
 reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_pipeline_reg[PIPELINE-1:1];
 
+// The necessary queue state information
+// The consumer pointer (16 bits)
 wire [QUEUE_PTR_WIDTH-1:0] queue_ram_read_data_head_ptr = queue_ram_read_data_pipeline_reg[PIPELINE-1][15:0];
+// The producer pointer (16 bits)
 wire [QUEUE_PTR_WIDTH-1:0] queue_ram_read_data_tail_ptr = queue_ram_read_data_pipeline_reg[PIPELINE-1][31:16];
+// The associated completion queue (16 bits)
 wire [CPL_INDEX_WIDTH-1:0] queue_ram_read_data_cpl_queue = queue_ram_read_data_pipeline_reg[PIPELINE-1][47:32];
+// log(QUEUE_PTR_WIDTH)
 wire [LOG_QUEUE_SIZE_WIDTH-1:0] queue_ram_read_data_log_queue_size = queue_ram_read_data_pipeline_reg[PIPELINE-1][51:48];
+
 wire [LOG_BLOCK_SIZE_WIDTH-1:0] queue_ram_read_data_log_block_size = queue_ram_read_data_pipeline_reg[PIPELINE-1][53:52];
+// Mark the queue is active 
 wire queue_ram_read_data_active = queue_ram_read_data_pipeline_reg[PIPELINE-1][55];
+// log(number of outstanding operations)
 wire [CL_OP_TABLE_SIZE-1:0] queue_ram_read_data_op_index = queue_ram_read_data_pipeline_reg[PIPELINE-1][63:56];
+// The pointer of the DMA address of the ring buffer 
 wire [ADDR_WIDTH-1:0] queue_ram_read_data_base_addr = queue_ram_read_data_pipeline_reg[PIPELINE-1][127:64];
 
 reg [OP_TABLE_SIZE-1:0] op_table_active = 0;
@@ -434,7 +443,9 @@ always @* begin
     // read complete, perform operation
     if (op_req_pipe_reg[PIPELINE-1]) begin
         // request
+        // Get queue id (qid)
         m_axis_dequeue_resp_queue_next = queue_ram_addr_pipeline_reg[PIPELINE-1];
+        // Get element id (eid) of the qid queue
         m_axis_dequeue_resp_ptr_next = queue_ram_read_active_tail_ptr;
         m_axis_dequeue_resp_addr_next = queue_ram_read_data_base_addr + ((queue_ram_read_active_tail_ptr & ({QUEUE_PTR_WIDTH{1'b1}} >> (QUEUE_PTR_WIDTH - queue_ram_read_data_log_queue_size))) << (CL_DESC_SIZE+queue_ram_read_data_log_block_size));
         m_axis_dequeue_resp_block_size_next = queue_ram_read_data_log_block_size;
