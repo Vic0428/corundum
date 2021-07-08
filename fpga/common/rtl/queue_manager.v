@@ -461,8 +461,9 @@ always @* begin
         // request
         // Get queue id (qid)
         m_axis_dequeue_resp_queue_next = queue_ram_addr_pipeline_reg[PIPELINE-1];
-        // Get element id (eid) of the qid queue
+        // Get the tail elemet id (eid)
         m_axis_dequeue_resp_ptr_next = queue_ram_read_active_tail_ptr;
+        // Element addr = base addr + eid * (DESZ_SIZE + BLOCK_SIZE)
         m_axis_dequeue_resp_addr_next = queue_ram_read_data_base_addr + ((queue_ram_read_active_tail_ptr & ({QUEUE_PTR_WIDTH{1'b1}} >> (QUEUE_PTR_WIDTH - queue_ram_read_data_log_queue_size))) << (CL_DESC_SIZE+queue_ram_read_data_log_block_size));
         m_axis_dequeue_resp_block_size_next = queue_ram_read_data_log_block_size;
         m_axis_dequeue_resp_cpl_next = queue_ram_read_data_cpl_queue;
@@ -471,10 +472,12 @@ always @* begin
         m_axis_dequeue_resp_empty_next = 1'b0;
         m_axis_dequeue_resp_error_next = 1'b0;
 
+        // Write the idx of outstanding op
         queue_ram_write_ptr = queue_ram_addr_pipeline_reg[PIPELINE-1];
         queue_ram_write_data[63:56] = op_table_start_ptr_reg;
         queue_ram_wr_en = 1'b1;
 
+        // This is the start queue and pointer
         op_table_start_queue = queue_ram_addr_pipeline_reg[PIPELINE-1];
         op_table_start_queue_ptr = queue_ram_read_active_tail_ptr + 1;
 
@@ -499,6 +502,7 @@ always @* begin
 
         // update tail pointer
         queue_ram_write_ptr = queue_ram_addr_pipeline_reg[PIPELINE-1];
+        // Update consumer pointer
         queue_ram_write_data[31:16] = write_data_pipeline_reg[PIPELINE-1];
         queue_ram_be[3:2] = 2'b11;
         queue_ram_wr_en = 1'b1;
@@ -622,6 +626,7 @@ always @* begin
     // dequeue commit (record in table)
     s_axis_dequeue_commit_ready_next = enable;
     if (s_axis_dequeue_commit_ready && s_axis_dequeue_commit_valid) begin
+        // Commit this op 
         op_table_commit_ptr = s_axis_dequeue_commit_op_tag;
         op_table_commit_en = 1'b1;
     end
