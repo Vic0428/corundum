@@ -244,7 +244,7 @@ wire [LOG_QUEUE_SIZE_WIDTH-1:0] queue_ram_read_data_log_queue_size = queue_ram_r
 wire [LOG_BLOCK_SIZE_WIDTH-1:0] queue_ram_read_data_log_block_size = queue_ram_read_data_pipeline_reg[PIPELINE-1][53:52];
 // Mark the queue is active 
 wire queue_ram_read_data_active = queue_ram_read_data_pipeline_reg[PIPELINE-1][55];
-// log(number of outstanding operations)
+// The index of current outstanding operaiton 
 wire [CL_OP_TABLE_SIZE-1:0] queue_ram_read_data_op_index = queue_ram_read_data_pipeline_reg[PIPELINE-1][63:56];
 // The pointer of the DMA address of the ring buffer 
 wire [ADDR_WIDTH-1:0] queue_ram_read_data_base_addr = queue_ram_read_data_pipeline_reg[PIPELINE-1][127:64];
