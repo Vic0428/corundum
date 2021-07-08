@@ -122,6 +122,8 @@ module desc_fetch #
 
     /*
      * Descriptor dequeue request output
+     * Vic: 
+     *  Passed to rx_queue_manager and tx_queue_manager
      */
     output wire [PORTS*QUEUE_INDEX_WIDTH-1:0]     m_axis_desc_dequeue_req_queue,
     output wire [PORTS*REQ_TAG_WIDTH-1:0]         m_axis_desc_dequeue_req_tag,
@@ -130,6 +132,8 @@ module desc_fetch #
 
     /*
      * Descriptor dequeue response input
+     * Vic: 
+     *  Passed from rx_queue_manager and tx_queue_manager 
      */
     input  wire [PORTS*QUEUE_INDEX_WIDTH-1:0]     s_axis_desc_dequeue_resp_queue,
     input  wire [PORTS*QUEUE_PTR_WIDTH-1:0]       s_axis_desc_dequeue_resp_ptr,
@@ -342,19 +346,27 @@ dma_psdpram_inst (
     /*
      * Write port
      */
+    // Input signal
     .wr_cmd_be(dma_ram_wr_cmd_be),
+    // write address
     .wr_cmd_addr(dma_ram_wr_cmd_addr),
+    // write data
     .wr_cmd_data(dma_ram_wr_cmd_data),
     .wr_cmd_valid(dma_ram_wr_cmd_valid),
+    // Output signal
     .wr_cmd_ready(dma_ram_wr_cmd_ready),
     .wr_done(dma_ram_wr_done),
 
     /*
      * Read port
      */
+     // Input signal
+     // read address
     .rd_cmd_addr(dma_ram_rd_cmd_addr_int),
     .rd_cmd_valid(dma_ram_rd_cmd_valid_int),
     .rd_cmd_ready(dma_ram_rd_cmd_ready_int),
+    // Output signal
+    // read data 
     .rd_resp_data(dma_ram_rd_resp_data_int),
     .rd_resp_valid(dma_ram_rd_resp_valid_int),
     .rd_resp_ready(dma_ram_rd_resp_ready_int)
