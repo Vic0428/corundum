@@ -570,6 +570,7 @@ always @* begin
         desc_table_start_en = 1'b1;
 
         // initiate receive operation
+        // dma_client write packet data into buffer
         m_axis_rx_desc_addr_next = (buf_wr_ptr_reg & RX_BUFFER_PTR_MASK) + RX_BUFFER_OFFSET;
         m_axis_rx_desc_len_next = mtu_reg;
         m_axis_rx_desc_tag_next = desc_table_start_ptr_reg & DESC_PTR_MASK;
